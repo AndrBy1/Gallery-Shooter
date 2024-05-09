@@ -56,7 +56,7 @@ class ShooterGame extends Phaser.Scene{
         this.load.image("bullet", "effect_purple.png");
         this.load.image("enemyFire", "meteor_detailedSmall.png");
         this.load.image("alienShip1", "ship_E.png");
-        this.load.image("alienShip2", "ship_F.png");
+        this.load.image("alienShip2", "ship_H.png");
         this.load.bitmapFont('Ariel', 'Font_0.png', 'Font.xml');
     }
 
@@ -66,6 +66,11 @@ class ShooterGame extends Phaser.Scene{
         this.healthTxt = this.add.bitmapText(10, 565, 'Ariel', "Health: " + Health);
         this.scoreTxt = this.add.bitmapText(650, 565, 'Ariel', "Score: " + Score);
         this.levelTxt = this.add.bitmapText(565, 10, 'Ariel', "Level: " + Level);
+
+        this.leftKey = this.input.keyboard.addKey("A");
+        this.rightKey = this.input.keyboard.addKey("D");
+        this.shootKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.oKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
 
         this.trackEnemy = this.enemyCount;
         my.sprite.playerSprite = this.add.sprite(this.startX, this.startY, "character");
@@ -95,11 +100,8 @@ class ShooterGame extends Phaser.Scene{
         my.sprite.enemyMover = this.add.follower(this.curve, 10, 10, "bullet");
         my.sprite.enemyMover.visible = false;
 
-        this.leftKey = this.input.keyboard.addKey("A");
-        this.rightKey = this.input.keyboard.addKey("D");
-        this.shootKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        this.oKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
-        
+        my.sprite.enemy2 = this.add.sprite(my.sprite.playerSprite.x, 0, "alienShip2");
+
         my.sprite.bulletGroup = this.add.group({
             defaultKey: "bullet",
             maxSize: 10
@@ -191,6 +193,27 @@ class ShooterGame extends Phaser.Scene{
 
         my.sprite.bulletGroup.incY(-this.bulletSpeed);
 
+        my.sprite.enemy2.y = my.sprite.enemy2.y + 3;
+        my.sprite.enemy2.flipY = true;
+
+        if((this.frame % 80 == 0) && (my.sprite.enemy2.active == false)){
+            console.log("check");
+            my.sprite.enemy2.active = true;
+            my.sprite.enemy2.visible = true;
+            my.sprite.enemy2.health = 4;
+            my.sprite.enemy2.y = 0;
+            my.sprite.enemy2.x = my.sprite.playerSprite.x;
+        }
+
+        if(this.hit(my.sprite.enemy2, my.sprite.playerSprite) && this.hitCooldown){
+            Health--;
+            console.log("player hit");
+            if(Health == 0){
+                this.scene.start("endScreen");
+            }
+            this.hitCooldown = false;
+        }
+
         let yPosition = 0;
         let xPosition = 0;
         //let enemyXMove = this.curve.points[0].x;
@@ -223,6 +246,10 @@ class ShooterGame extends Phaser.Scene{
             if(this.justStart == true){
                 enemy.health = this.enemyHealth;
                 enemy.visible = true;
+                my.sprite.enemy2.active = true;
+                my.sprite.enemy2.health = 4;
+                my.sprite.enemy2.y = 0;
+                my.sprite.enemy2.x = my.sprite.playerSprite.x;
             }
             if(xPosition > 400)
             {
@@ -245,8 +272,23 @@ class ShooterGame extends Phaser.Scene{
                         console.log("track enemy" + this.trackEnemy);
                     }
                 }
+                if(this.hit(bullet, my.sprite.enemy2))
+                {
+                    my.sprite.enemy2.health--;
+                    if(my.sprite.enemy2.active == true){
+                        bullet.active = false;
+                        bullet.visible = false;
+                    }
+                    if(my.sprite.enemy2.health == 0){
+                        my.sprite.enemy2.active = false;
+                        my.sprite.enemy2.visible = false;
+                        Score++;
+                        Health++;
+                        console.log("track enemy 2" + this.trackEnemy);
+                    }
+                }
             }
-            console.log("enemy health: " + enemy.health);
+            //console.log("enemy health: " + enemy.health);
             if(this.frame % 35 == 0 && enemy.active == true){
                 let enemyBullet = my.sprite.enemybulletGroup.getFirstDead();
                 enemyBullet.setScale(0.35);
